@@ -12,6 +12,19 @@ app = Flask(__name__)
 bootstrap = Bootstrap(app)
 app.config.from_object(configs)
 
+##原生表单
+#@app.route('/')
+#def form():
+#    return render_template('login.html')
+
+#获取原生表单提交的数据
+#@app.route('/check',methods=['POST'])
+#def check():
+#     print(request.form.get('userpass'))
+#     print(request.form.get('username'))
+#     return '提交过来了'
+
+
 
 class NameForm(FlaskForm):
     name = StringField('What is your name?',validators=[Required()])
@@ -25,7 +38,7 @@ def index():
         name = form.name.data
         form.name.data = ''
     return render_template('index.html',form=form,name=name)
-#    return render_template('index1.html')
+#    return render_template('login.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

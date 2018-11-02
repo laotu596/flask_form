@@ -1,0 +1,100 @@
+1、原生表单
+html 文件
+
+<form action="{{ url_for('check') }}" method="post">
+        <p>用户名: <input type="text" name="username"></p>
+        <p>密码: <input type="password" name="userpass"></p>
+        <p><input type="submit" value="submit"></p>
+ </form>
+
+
+ 视图函数
+@app.route('/login/', methods=['GET', 'POST'])
+def login():
+    return render_template('login.html')
+
+# 校验
+@app.route('/check/', methods=['GET', 'POST'])
+def check():
+    return '登陆成功, %s~' % request.form['username']
+
+
+2、使用flask-wtf 表单
+安装flask-wtf
+pip install flask-wtf
+
+
+from flask_wtf import FlaskForm                  # 导入表单基类
+from wtforms import StringField, SubmitField     # 导入相关类型
+from wtforms.validators import DataRequired      # 导入验证器
+
+# CSRF需要
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'idandan'
+
+# 定义表单类
+class NameForm(FlaskForm):
+    name = StringField('账号：', validators=[DataRequired()])             #StringField 类表示属性为type="text" 得html<input>元素   验证函数DataRequired()确保提交得字段内容不为空
+    submit = SubmitField('登陆')                                          #SubmitField 类表示属性为type="submit" 得html<input>元素
+
+
+@app.route('/formTest/')
+def formTest():
+    # 创建表单对象
+    form = NameForm()
+    return render_template('formTest.html', form = form)
+
+
+# flask-wtf  表单html
+<form method="POST">
+    {{ form.hidden_tag() }}                                                       #form.hidden_tag() 生成一个隐藏得字段，供Flask-WTF 得CSRF 防护机制使用
+    {{ form.name .label()}} {{ form.name(id = 'username', class  = 'username') }}
+    {{ form.submit }}
+</form>
+
+# bootstrap渲染
+{% import "bootstrap/wtf.html" as wtf %}      #以上表单可以使用bootstrap预定义得表单样式来渲染
+{{ wtf.quick_form(form) }}
+
+# 设置bootstrap本地库中的文件
+app.config['BOOTSTRAP_SERVER_LOCAL'] = True
+
+#完整得模板 index.html
+{% extends 'bootstrap/base.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block title %}标题{% endblock %}
+
+{% block page_content %}
+    <div class="page-header">
+        <h1>Hello,{% if name %}{{ name }}{% else %}Stranger{% endif %}!</h1>
+    </div>
+    {{ wtf.quick_form(form) }}
+{% endblock %}
+
+3、在视图函数中处理表单
+
+新版得hello.py 试图函数index（）有两个任务，一、渲染表单；二、接受用户在表单中填写得数据
+
+hello.py
+
+@app.route('/',methods=['GET','POST '])
+def index():
+    name = None                                                  #用于存放表单输入得有效名字，如果没有输入，其值为None
+    form = NameForm()                                            #创建得实例NameForm 用于表示表单
+    if form.validate_on_submit():
+        name = form.name.data
+        form.name.data = ''
+    return render_template('index.html',form=form,name=name)
+
+4、重定向和用户会话
+hello.py
+from flask import Flask,render_template,session,redirect,url_for
+
+@app_route('/',methods=['GET','POST'])
+def index():
+    form = NameForm()
+    if form.validate_on_summit():
+        session['name'] = form.name.data
+        return redirect(url_for('index')
+     return render_template('index.html',form=form,name=session.get('name'))
